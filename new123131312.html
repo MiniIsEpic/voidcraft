@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VoidCraft • The Darkest SMP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=UnifrakturMaguntia&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #050508;
+    --surface: #0c0c12;
+    --surface2: #111118;
+    --border: #1e1e2e;
+    --border-glow: #3a1a2e;
+    --text: #c8c0d0;
+    --text-dim: #6a6278;
+    --accent: #8b1a1a;
+    --accent2: #5a0f3c;
+    --accent-glow: #c0002244;
+    --green: #1a3a1a;
+    --green-bright: #2a7a2a;
+    --blood: #6b0000;
+    --fog: #0a0a1588;
+    --serif: 'Crimson Pro', serif;
+    --fraktur: 'UnifrakturMaguntia', cursive;
+    --mono: 'Courier Prime', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.7;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.6;
+  }
+
+  /* FOG ANIMATION */
+  @keyframes fogDrift {
+    0% { transform: translateX(-10%) scaleY(1); opacity: 0.18; }
+    50% { transform: translateX(5%) scaleY(1.05); opacity: 0.28; }
+    100% { transform: translateX(-10%) scaleY(1); opacity: 0.18; }
+  }
+  @keyframes fogDrift2 {
+    0% { transform: translateX(8%) scaleY(1); opacity: 0.12; }
+    50% { transform: translateX(-6%) scaleY(0.95); opacity: 0.22; }
+    100% { transform: translateX(8%) scaleY(1); opacity: 0.12; }
+  }
+  @keyframes flicker {
+    0%,100% { opacity: 1; } 92% { opacity: 1; } 93% { opacity: 0.4; } 94% { opacity: 1; } 96% { opacity: 0.7; } 97% { opacity: 1; }
+  }
+  @keyframes heartbeat {
+    0%,100% { transform: scale(1); } 50% { transform: scale(1.03); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes sanityDrain {
+    0% { width: 72%; }
+    50% { width: 68%; }
+    100% { width: 72%; }
+  }
+  @keyframes bloodDrip {
+    0% { transform: translateY(-100%); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(100vh); opacity: 0.4; }
+  }
+  @keyframes pulse-border {
+    0%,100% { border-color: var(--border); box-shadow: none; }
+    50% { border-color: var(--accent); box-shadow: 0 0 18px var(--accent-glow); }
+  }
+  @keyframes eyeOpen {
+    0%,100% { transform: scaleY(0.1); }
+    30%,70% { transform: scaleY(1); }
+  }
+  @keyframes glitchShift {
+    0%,100% { clip-path: inset(0 0 100% 0); }
+    5% { clip-path: inset(20% 0 60% 0); transform: translateX(-4px); }
+    10% { clip-path: inset(0 0 0 0); transform: translateX(0); }
+    90% { clip-path: inset(0 0 0 0); }
+    95% { clip-path: inset(60% 0 20% 0); transform: translateX(3px); }
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 48px;
+    background: linear-gradient(to bottom, #050508ee, transparent);
+    backdrop-filter: blur(2px);
+    border-bottom: 1px solid #ffffff08;
+  }
+  .nav-logo {
+    font-family: var(--fraktur);
+    font-size: 1.6rem;
+    color: #fff;
+    text-decoration: none;
+    text-shadow: 0 0 30px var(--accent), 0 0 60px #ff000022;
+    animation: flicker 8s infinite;
+  }
+  .nav-links { display: flex; gap: 36px; list-style: none; }
+  .nav-links a {
+    color: var(--text-dim); font-size: 0.8rem; letter-spacing: 0.2em;
+    text-transform: uppercase; text-decoration: none; font-family: var(--mono);
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-status {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--green-bright); letter-spacing: 0.1em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green-bright);
+    box-shadow: 0 0 8px var(--green-bright);
+    animation: heartbeat 2s ease-in-out infinite;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    padding: 120px 24px 80px;
+    text-align: center;
+  }
+
+  /* FOG LAYERS */
+  .fog-layer {
+    position: absolute; inset: 0; pointer-events: none;
+  }
+  .fog-layer::before {
+    content: '';
+    position: absolute; bottom: -40px; left: -20%; right: -20%; height: 55%;
+    background: radial-gradient(ellipse 120% 60% at 50% 100%, #0d0820cc 0%, transparent 70%);
+    animation: fogDrift 12s ease-in-out infinite;
+  }
+  .fog-layer::after {
+    content: '';
+    position: absolute; bottom: -20px; left: -30%; right: -30%; height: 40%;
+    background: radial-gradient(ellipse 140% 50% at 40% 100%, #1a0a1a99 0%, transparent 70%);
+    animation: fogDrift2 16s ease-in-out infinite;
+  }
+
+  /* BLOOD DRIPS */
+  .blood-drip {
+    position: absolute; top: 0; width: 2px;
+    background: linear-gradient(to bottom, transparent, var(--blood), transparent);
+    border-radius: 0 0 4px 4px;
+    animation: bloodDrip 6s ease-in infinite;
+    pointer-events: none;
+  }
+  .blood-drip:nth-child(1) { left: 15%; height: 120px; animation-delay: 0s; animation-duration: 7s; }
+  .blood-drip:nth-child(2) { left: 35%; height: 90px; animation-delay: 2s; animation-duration: 9s; }
+  .blood-drip:nth-child(3) { left: 62%; height: 140px; animation-delay: 4s; animation-duration: 6s; }
+  .blood-drip:nth-child(4) { left: 82%; height: 80px; animation-delay: 1s; animation-duration: 8s; }
+
+  /* VIGNETTE */
+  .hero::after {
+    content: '';
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 30%, #050508cc 100%);
+  }
+
+  .hero-eyeball {
+    width: 64px; height: 36px; position: relative;
+    background: #fff;
+    border-radius: 50%;
+    margin: 0 auto 32px;
+    overflow: hidden;
+    border: 2px solid #2a1a1a;
+    box-shadow: 0 0 24px var(--accent-glow);
+    animation: eyeOpen 6s ease-in-out infinite;
+    z-index: 1;
+  }
+  .hero-eyeball::after {
+    content: '';
+    position: absolute; top: 50%; left: 50%;
+    width: 22px; height: 22px;
+    background: radial-gradient(circle at 40% 40%, #3a1a1a 40%, #000);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .hero-badge {
+    font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.25em;
+    color: var(--accent); text-transform: uppercase;
+    border: 1px solid var(--accent2); border-radius: 2px;
+    padding: 4px 14px; margin-bottom: 24px;
+    display: inline-block; z-index: 1;
+    animation: fadeUp 0.8s ease both 0.2s;
+  }
+
+  h1 {
+    font-family: var(--fraktur);
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    line-height: 1.1;
+    color: #fff;
+    text-shadow: 0 0 40px var(--accent), 0 2px 0 #000, 0 0 80px #ff000011;
+    margin-bottom: 24px;
+    z-index: 1;
+    animation: fadeUp 0.8s ease both 0.4s, flicker 10s infinite 2s;
+  }
+
+  .hero-sub {
+    font-size: 1.15rem; font-style: italic; color: var(--text-dim);
+    max-width: 520px; margin: 0 auto 40px; z-index: 1;
+    animation: fadeUp 0.8s ease both 0.6s;
+  }
+
+  .hero-actions {
+    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+    z-index: 1; animation: fadeUp 0.8s ease both 0.8s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff; border: none; font-family: var(--mono);
+    font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 14px 32px; cursor: crosshair; text-decoration: none;
+    position: relative; overflow: hidden;
+    transition: background 0.2s, box-shadow 0.2s;
+    border: 1px solid #ff000033;
+  }
+  .btn-primary:hover {
+    background: #a02020;
+    box-shadow: 0 0 32px var(--accent-glow), 0 0 64px #ff000022;
+  }
+  .btn-primary::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 30%, #ffffff11 50%, transparent 70%);
+    transform: translateX(-100%); transition: transform 0.5s;
+  }
+  .btn-primary:hover::after { transform: translateX(100%); }
+
+  .ip-copy {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 13px 20px; font-family: var(--mono); font-size: 0.85rem;
+    color: var(--text-dim); cursor: pointer; transition: border-color 0.2s, color 0.2s;
+  }
+  .ip-copy:hover { border-color: var(--accent); color: var(--text); }
+  .ip-copy span { color: var(--text-dim); font-size: 0.7rem; letter-spacing: 0.1em; }
+
+  /* STATS */
+  .hero-stats {
+    display: flex; gap: 64px; justify-content: center; margin-top: 80px;
+    z-index: 1; animation: fadeUp 0.8s ease both 1s;
+    flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: var(--fraktur); font-size: 2.2rem; color: #fff;
+    display: block; text-shadow: 0 0 20px var(--accent);
+  }
+  .stat-label {
+    font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+
+  /* SECTIONS */
+  section { padding: 100px 24px; max-width: 1100px; margin: 0 auto; }
+
+  .section-tag {
+    font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 12px; display: block;
+  }
+  h2 {
+    font-family: var(--fraktur); font-size: clamp(2rem, 4vw, 3.2rem);
+    color: #fff; line-height: 1.2; margin-bottom: 16px;
+    text-shadow: 0 0 30px var(--accent-glow);
+  }
+  .section-intro { color: var(--text-dim); max-width: 540px; margin-bottom: 64px; font-style: italic; }
+
+  /* SANITY BAR */
+  .sanity-widget {
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 28px 32px; margin-bottom: 64px;
+    position: relative; overflow: hidden;
+  }
+  .sanity-widget::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      90deg, transparent 0, transparent 3px, #ffffff03 3px, #ffffff03 4px
+    );
+    pointer-events: none;
+  }
+  .sanity-label {
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;
+    display: flex; justify-content: space-between;
+  }
+  .sanity-track {
+    height: 6px; background: #1a1a1a; border: 1px solid #2a1a1a;
+    position: relative; overflow: hidden;
+  }
+  .sanity-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blood), #8b1a8b);
+    animation: sanityDrain 4s ease-in-out infinite;
+    position: relative;
+  }
+  .sanity-fill::after {
+    content: ''; position: absolute; right: -1px; top: -2px; bottom: -2px; width: 3px;
+    background: #fff; box-shadow: 0 0 8px #fff;
+  }
+  .sanity-events {
+    margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .sanity-event {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--blood);
+    border: 1px solid var(--blood); padding: 3px 10px; letter-spacing: 0.1em;
+  }
+
+  /* FEATURE CARDS */
+  .features-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .feature-card {
+    background: var(--surface); padding: 36px 28px;
+    transition: background 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .feature-card:hover { background: var(--surface2); animation: pulse-border 2s ease-in-out infinite; }
+  .feature-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .feature-card:hover::before { opacity: 1; }
+
+  .feature-icon {
+    font-size: 1.6rem; margin-bottom: 18px; display: block;
+    filter: grayscale(0.3);
+  }
+  .feature-card h3 {
+    font-family: var(--fraktur); font-size: 1.4rem; color: #e8e0f0;
+    margin-bottom: 10px;
+  }
+  .feature-card p { color: var(--text-dim); font-size: 0.95rem; line-height: 1.6; }
+
+  /* GALLERY */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .gallery-item {
+    position: relative; overflow: hidden; background: var(--surface2);
+    aspect-ratio: 4/3;
+  }
+  .gallery-item:first-child { grid-row: 1 / 3; aspect-ratio: unset; }
+  .gallery-placeholder {
+    width: 100%; height: 100%; min-height: 200px;
+    background: linear-gradient(135deg, #0d0d18 0%, #1a0a14 50%, #0a0d1a 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .gallery-placeholder::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      45deg, #ffffff04 0, #ffffff04 1px, transparent 1px, transparent 12px
+    );
+  }
+  .gallery-label {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 40px 20px 20px;
+    background: linear-gradient(to top, #050508ee, transparent);
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+  .gallery-label strong { display: block; color: var(--text); font-size: 0.85rem; margin-bottom: 2px; }
+
+  /* STRUCTURE ICONS in gallery */
+  .structure-icon {
+    font-size: 3rem; opacity: 0.2; position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+  }
+
+  /* FAQ */
+  .faq-list { border: 1px solid var(--border); }
+  .faq-item { border-bottom: 1px solid var(--border); }
+  .faq-item:last-child { border-bottom: none; }
+  .faq-question {
+    width: 100%; background: none; border: none;
+    padding: 24px 28px; text-align: left; cursor: crosshair;
+    font-family: var(--serif); font-size: 1rem; color: var(--text);
+    display: flex; justify-content: space-between; align-items: center;
+    transition: background 0.2s;
+  }
+  .faq-question:hover { background: var(--surface2); }
+  .faq-question .arrow {
+    font-family: var(--mono); color: var(--accent); font-size: 1rem; flex-shrink: 0;
+    transition: transform 0.3s;
+  }
+  .faq-item.open .arrow { transform: rotate(90deg); }
+  .faq-answer {
+    max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s;
+    padding: 0 28px; font-size: 0.95rem; color: var(--text-dim); font-style: italic;
+    border-top: 0; background: var(--surface2);
+  }
+  .faq-item.open .faq-answer { max-height: 200px; padding: 20px 28px; border-top: 1px solid var(--border); }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 48px 48px 32px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: gap;
+    gap: 20px;
+  }
+  .footer-logo { font-family: var(--fraktur); font-size: 1.4rem; color: var(--text-dim); text-shadow: 0 0 20px var(--accent-glow); }
+  footer p { font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.1em; }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px; max-width: 1100px; margin: 0 auto;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  /* SCROLL ANIMATIONS */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  /* MOBILE */
+  @media (max-width: 640px) {
+    nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    h1 { font-size: 2.6rem; }
+    .hero-stats { gap: 36px; }
+    .gallery-grid { grid-template-columns: 1fr; }
+    .gallery-item:first-child { grid-row: auto; }
+    footer { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#top" class="nav-logo">VoidCraft</a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <div class="nav-status">
+    <div class="status-dot"></div>
+    <span class="player-count">47 souls online</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top" style="max-width:100%;padding-left:24px;padding-right:24px;">
+  <!-- fog -->
+  <div class="fog-layer"></div>
+  <!-- blood drips -->
+  <div class="blood-drip"></div>
+  <div class="blood-drip"></div>
+  <div class="blood-drip"></div>
+  <div class="blood-drip"></div>
+
+  <div class="hero-eyeball"></div>
+  <span class="hero-badge">⛧ Season I • The Descent ⛧</span>
+  <h1>The Darkest SMP<br/>Server</h1>
+  <p class="hero-sub">
+    Survival horror Minecraft. Manage your sanity, survive the fog, and pray you don't hear the structures breathe.
+  </p>
+
+  <div class="hero-actions">
+    <a href="VoidCraft.bat" download class="btn-primary">▶ Download Client</a>
+    <div class="ip-copy" onclick="navigator.clipboard.writeText('voidcraft.gg');this.querySelector('span').textContent='Copied!'">
+      voidcraft.gg &nbsp; <span>Copy IP</span>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-num">666+</span><span class="stat-label">Unique Players</span></div>
+    <div class="stat"><span class="stat-num">2,100+</span><span class="stat-label">Discord Members</span></div>
+    <div class="stat"><span class="stat-label" style="margin-top:8px">Average Sanity</span><span class="stat-num" style="color:var(--blood)">34%</span></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FEATURES -->
+<section id="features">
+  <span class="section-tag reveal">Core Systems</span>
+  <h2 class="reveal">Dread by Design</h2>
+  <p class="section-intro reveal">Every system is built to make you uncomfortable. That's the point.</p>
+
+  <!-- SANITY WIDGET -->
+  <div class="sanity-widget reveal">
+    <div class="sanity-label">
+      <span>☠ Sanity Meter</span>
+      <span style="color:var(--blood)">DRAINING</span>
+    </div>
+    <div class="sanity-track"><div class="sanity-fill"></div></div>
+    <div class="sanity-events">
+      <div class="sanity-event">− Heard something in the fog</div>
+      <div class="sanity-event">− Entered corrupted zone</div>
+      <div class="sanity-event">− Alone in the dark</div>
+      <div class="sanity-event">− Saw the structure move</div>
+    </div>
+  </div>
+
+  <div class="features-grid reveal">
+    <div class="feature-card">
+      <span class="feature-icon">🧠</span>
+      <h3>Sanity System</h3>
+      <p>Your sanity drains in the dark, in corrupted zones, and near horror structures. Lose too much and reality begins to break — false sounds, visual distortions, hostile hallucinations.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🌫️</span>
+      <h3>Dynamic Fog</h3>
+      <p>The fog thickens at night, near cursed biomes, and after player deaths. It hides what shouldn't be seen — and sometimes what it hides follows you home.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🏚️</span>
+      <h3>Horror Structures</h3>
+      <p>Procedurally haunted dungeons, hanging effigies, flooded mansions, and ritual sites that weren't there yesterday. Each structure has its own event chain and guardian.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🩸</span>
+      <h3>Infection & Curse</h3>
+      <p>Corrupted mobs spread blight on hit. Curses stack silently — you won't know you're cursed until it's too late. Cleansing requires ritual, not potions.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🕯️</span>
+      <h3>Light Dependency</h3>
+      <p>Torches flicker and die near dark zones. Darkness isn't just visual — it's mechanical. Sanity and health both bleed in true dark. Light is survival.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">💀</span>
+      <h3>Permadeath Events</h3>
+      <p>Monthly void events that risk permanent character mark. Survivors earn unique relics. The dead leave behind echoes — ghost data that haunts others.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <span class="section-tag reveal">Gallery</span>
+  <h2 class="reveal">What Awaits</h2>
+  <p class="section-intro reveal">Screenshots feel different when you know something might be standing just off-screen.</p>
+
+  <div class="gallery-grid reveal">
+    <div class="gallery-item">
+      <div class="gallery-placeholder">
+        <div class="structure-icon">🏚️</div>
+        <div class="gallery-label">
+          <strong>The Rot Spire</strong>
+          Central haunted tower — the heart of corruption on the map.
+        </div>
+      </div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-placeholder" style="background:linear-gradient(135deg,#060a0a 0%,#0a1a14 100%)">
+        <div class="structure-icon">🌫️</div>
+        <div class="gallery-label">
+          <strong>The Foglands</strong>
+          Sanity drains at 3× speed here.
+        </div>
+      </div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-placeholder" style="background:linear-gradient(135deg,#100808 0%,#1a0a0a 100%)">
+        <div class="structure-icon">🩸</div>
+        <div class="gallery-label">
+          <strong>Ritual Altar</strong>
+          Used for cleansing — and worse.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FAQ -->
+<section id="faq">
+  <span class="section-tag reveal">FAQ</span>
+  <h2 class="reveal">Before You Descend</h2>
+  <p class="section-intro reveal">Things you should probably know before joining.</p>
+
+  <div class="faq-list reveal">
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        How do I join VoidCraft?
+        <span class="arrow">▶</span>
+      </button>
+      <div class="faq-answer">Connect with your official Minecraft Java account to <strong>voidcraft.gg</strong>. We strongly recommend using the VoidClient for the full experience — custom shaders, horror sound packs, and the sanity HUD are all bundled in.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        What is the sanity system exactly?
+        <span class="arrow">▶</span>
+      </button>
+      <div class="faq-answer">Sanity is a 0–100 meter that depletes based on proximity to darkness, horror structures, cursed biomes, and death events. Below 50%, you'll begin experiencing auditory hallucinations. Below 25%, hostile illusions spawn. At 0%, a void event triggers.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        Are horror structures always active?
+        <span class="arrow">▶</span>
+      </button>
+      <div class="faq-answer">No — structures cycle between dormant, active, and awakened states based on server-wide sanity levels and moon phase. An awakened structure has its own boss event and generates new dungeon rooms each cycle.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        Can I play solo or is teaming required?
+        <span class="arrow">▶</span>
+      </button>
+      <div class="faq-answer">You can play solo, but the game is balanced around the difficulty spiking significantly when alone. Sanity drains faster solo, the fog is denser, and some horror structures require multiple players to survive. Isolation is a risk, not a playstyle.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFaq(this)">
+        What version does the server run?
+        <span class="arrow">▶</span>
+      </button>
+      <div class="faq-answer">We run the latest stable Minecraft Java version with custom plugins for the sanity system, fog engine, and horror structure generation. VoidClient bundles everything — no manual setup required.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="footer-logo">VoidCraft</div>
+    <p style="margin-top:8px">Not affiliated with Mojang Studios. Minecraft is a trademark of Mojang.</p>
+  </div>
+  <p>© 2026 VoidCraft SMP. All rights reserved. &nbsp;|&nbsp; voidcraft.gg</p>
+</footer>
+
+<script>
+  // FAQ toggle
+  function toggleFaq(btn) {
+    const item = btn.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  }
+
+  // Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Random fog flicker on sanity bar
+  setInterval(() => {
+    const fill = document.querySelector('.sanity-fill');
+    if (!fill) return;
+    const base = 68 + Math.random() * 8;
+    fill.style.width = base + '%';
+  }, 3000);
+
+  // Fluctuating player count
+  // Starts at 47, fluctuates between 30-120
+  // Every 5 minutes: goes UP by 1-7 OR DOWN by 1-7 (randomly)
+  // Hard clamped to [30, 120]
+  let currentPlayers = 47;
+
+  function updatePlayerCount() {
+    const direction = Math.random() < 0.5 ? 1 : -1;
+    const change = Math.floor(Math.random() * 7) + 1; // 1–7
+    currentPlayers = Math.min(120, Math.max(30, currentPlayers + direction * change));
+
+    // Update all elements showing the count
+    document.querySelectorAll('.player-count').forEach(el => {
+      el.textContent = currentPlayers + ' souls online';
+    });
+  }
+
+  // Run every 5 minutes (300,000 ms)
+  setInterval(updatePlayerCount, 300000);
+</script>
+</body>
+</html>
